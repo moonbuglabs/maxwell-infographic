@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From Maxwell's Equations to Memcomputing: A Visual Guide</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- 
+    CONFIRMATION: NO SVG or MERMAID JS used. Flowcharts and diagrams are built with HTML/CSS. 
+    Color Palette: Brilliant Blues (#00A1E4, #0077C0, #005082, #F2F2F2, #231F20)
+    
+    Narrative Plan:
+    1. Introduction: Hook with the importance of Maxwell's Equations.
+    2. The Foundation: Present the four core equations in a clear format.
+    3. The Translation: Explain discretization and compare methods.
+    4. The Bridge: Detail the crucial step of converting the problem to a QUBO, comparing the two main pathways.
+    5. The Solver: Introduce the Memcomputing paradigm and its structure.
+    6. The Full Process: A step-by-step flowchart of the entire workflow.
+    7. The Core Challenge: Visualize the trade-off between precision and problem size.
+    8. The Landscape: Compare this approach to other modern methods like PINNs.
+
+    Visualization Choices:
+    - Maxwell's Equations: Goal: Organize. Chosen Viz: HTML Table. Justification: Clear, structured presentation of formal equations. Method: HTML/CSS. NO SVG.
+    - Discretization Methods: Goal: Compare. Chosen Viz: Bar Chart. Justification: Ideal for comparing discrete categories (FDM, FEM, FVM) across quantitative metrics. Method: Chart.js. NO SVG.
+    - QUBO Pathways: Goal: Compare. Chosen Viz: Radar Chart. Justification: Excellent for multi-attribute comparison of two competing methods (Least-Squares vs. Eigenvalue). Method: Chart.js. NO SVG.
+    - Memcomputing Structure: Goal: Organize. Chosen Viz: Hierarchy Diagram. Justification: Clearly shows the nested relationship of concepts. Method: HTML/CSS. NO SVG.
+    - End-to-End Workflow: Goal: Organize. Chosen Viz: Flowchart. Justification: Best way to show a sequential process. Method: HTML/CSS. NO SVG/MERMAID.
+    - Precision vs. Size Trade-off: Goal: Show Relationship. Chosen Viz: Line Chart. Justification: Perfectly illustrates the relationship and conflict between two scaling variables. Method: Chart.js. NO SVG.
+    - Comparison to PINNs: Goal: Inform/Compare. Chosen Viz: Donut Chart. Justification: Simple, high-impact visual to show a conceptual composition or share. Method: Chart.js. NO SVG.
+    -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F2F2F2;
+            color: #231F20;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        .flowchart-step {
+            border: 2px solid #0077C0;
+            background-color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        .flowchart-arrow {
+            width: 2px;
+            height: 2rem;
+            background-color: #0077C0;
+            margin: 0 auto;
+            position: relative;
+        }
+        .flowchart-arrow::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 10px solid #0077C0;
+        }
+        .latex {
+            font-family: "Times New Roman", Times, serif;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-black text-[#005082] mb-2">From Physics to a New Reality</h1>
+            <p class="text-lg md:text-xl text-[#0077C0] font-medium">A Visual Guide to Solving Maxwell's Equations with Memcomputing</p>
+            <p class="max-w-4xl mx-auto text-gray-600 mt-4">This infographic visualizes the multi-stage journey of transforming a fundamental law of physics—a continuous Partial Differential Equation (PDE)—into a discrete optimization problem solvable by a novel, brain-inspired computing architecture.</p>
+        </header>
+
+        <main class="space-y-12">
+
+            <section id="maxwell" class="bg-white rounded-lg shadow-md p-6 lg:p-8">
+                <h2 class="text-3xl font-bold text-[#005082] mb-4 text-center">Section 1: The Foundation - Maxwell's Equations</h2>
+                <p class="text-center text-gray-700 max-w-3xl mx-auto mb-8">The bedrock of classical electromagnetism, these four coupled equations describe how electric and magnetic fields interact. Their solution is key to modern technology, but solving them is computationally intensive. We will focus on Faraday's Law as our case study.</p>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white border border-[#00A1E4]">
+                        <thead class="bg-[#005082] text-white">
+                            <tr>
+                                <th class="py-3 px-4 text-left">Law Name</th>
+                                <th class="py-3 px-4 text-left">Differential Form</th>
+                                <th class="py-3 px-4 text-left">Physical Meaning</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr>
+                                <td class="py-3 px-4 font-semibold">Gauss's Law (Electricity)</td>
+                                <td class="py-3 px-4 latex">∇ ⋅ D = ρ</td>
+                                <td class="py-3 px-4 text-gray-600">Electric fields originate from electric charges.</td>
+                            </tr>
+                            <tr class="bg-blue-50">
+                                <td class="py-3 px-4 font-semibold">Gauss's Law (Magnetism)</td>
+                                <td class="py-3 px-4 latex">∇ ⋅ B = 0</td>
+                                <td class="py-3 px-4 text-gray-600">There are no magnetic monopoles; magnetic fields form closed loops.</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3 px-4 font-semibold text-[#0077C0] border-l-4 border-[#0077C0]">Faraday's Law (Induction)</td>
+                                <td class="py-3 px-4 latex text-[#0077C0]">∇ × E = -∂B/∂t</td>
+                                <td class="py-3 px-4 text-gray-600">A changing magnetic field creates a circulating electric field.</td>
+                            </tr>
+                            <tr class="bg-blue-50">
+                                <td class="py-3 px-4 font-semibold">Ampère-Maxwell Law</td>
+                                <td class="py-3 px-4 latex">∇ × H = J + ∂D/∂t</td>
+                                <td class="py-3 px-4 text-gray-600">Currents or changing electric fields create a circulating magnetic field.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <section id="discretization" class="bg-white rounded-lg shadow-md p-6 lg:p-8">
+                 <h2 class="text-3xl font-bold text-[#005082] mb-4 text-center">Section 2: From Continuous to Discrete</h2>
+                 <p class="text-center text-gray-700 max-w-3xl mx-auto mb-8">Computers cannot handle the infinite points of a continuous equation. Discretization transforms the PDE into a finite system of algebraic equations (`Ax = b`) on a grid. While several methods exist, the Finite-Difference Time-Domain (FDTD) method is uniquely suited for Maxwell's equations due to its efficiency and direct physical analogy.</p>
+                 <div class="grid grid-cols-1 md:grid-cols-5 gap-8 items-center">
+                    <div class="md:col-span-3">
+                         <div class="chart-container mx-auto">
+                            <canvas id="discretizationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 text-gray-700">
+                        <h3 class="font-bold text-lg text-[#005082] mb-2">Comparing Techniques</h3>
+                        <p class="mb-4">This chart compares common discretization methods. A higher score indicates better performance for that metric.</p>
+                        <ul class="space-y-2">
+                           <li><span class="font-bold">FDM (FDTD):</span> Best for simple geometries and highly efficient, making it the choice for this workflow.</li>
+                           <li><span class="font-bold">FEM:</span> Best for systems with complex, irregular shapes, but is more computationally expensive.</li>
+                           <li><span class="font-bold">FVM:</span> Ensures physical quantities are conserved, crucial for fluid dynamics but more complex than FDM.</li>
+                        </ul>
+                    </div>
+                 </div>
+            </section>
+
+            <section id="qubo-pathways" class="bg-white rounded-lg shadow-md p-6 lg:p-8">
+                <h2 class="text-3xl font-bold text-[#005082] mb-4 text-center">Section 3: The Bridge to Optimization - QUBO</h2>
+                <p class="text-center text-gray-700 max-w-3xl mx-auto mb-8">The system `Ax = b` must be reframed as a Quadratic Unconstrained Binary Optimization (QUBO) problem, the native language of many novel solvers. This involves converting continuous field values into binary bits. Two main pathways exist for this conversion, each with significant trade-offs.</p>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-8 items-center">
+                    <div class="md:col-span-2 text-gray-700">
+                        <h3 class="font-bold text-lg text-[#005082] mb-2">Two Paths, One Goal</h3>
+                        <p class="mb-4">The chart shows how the two methods for converting a linear system to a QUBO compare across key attributes.</p>
+                        <ul class="space-y-2">
+                           <li><span class="font-bold text-[#00A1E4]">Least-Squares:</span> A direct, one-shot conversion. It is conceptually simple but leads to an explosion in problem size as precision increases.</li>
+                           <li><span class="font-bold text-[#005082]">Generalized Eigenvalue:</span> An iterative approach that solves a series of smaller problems. It avoids the size explosion, trading a hardware problem (size) for a software one (time).</li>
+                        </ul>
+                    </div>
+                    <div class="md:col-span-3">
+                         <div class="chart-container mx-auto">
+                            <canvas id="quboPathwayChart"></canvas>
+                        </div>
+                    </div>
+                 </div>
+            </section>
+
+            <section id="workflow" class="bg-white rounded-lg shadow-md p-6 lg:p-8">
+                <h2 class="text-3xl font-bold text-[#005082] mb-4 text-center">Section 4: The End-to-End Workflow</h2>
+                <p class="text-center text-gray-700 max-w-3xl mx-auto mb-8">This entire process, from physics to a final number, follows a concrete, multi-stage pipeline. Each step transforms the problem, making it progressively more compatible with the target memcomputing hardware.</p>
+                <div class="flex flex-col items-center">
+                    <div class="flowchart-step w-full max-w-md"><strong>1. Start with PDE</strong><p class="text-sm text-gray-500 font-normal">e.g., Faraday's Law<br><span class="latex">∇ × E = -∂B/∂t</span></p></div>
+                    <div class="flowchart-arrow"></div>
+                    <div class="flowchart-step w-full max-w-md"><strong>2. Discretize Domain</strong><p class="text-sm text-gray-500 font-normal">Apply FDTD on a Yee Lattice</p></div>
+                    <div class="flowchart-arrow"></div>
+                    <div class="flowchart-step w-full max-w-md"><strong>3. Formulate System</strong><p class="text-sm text-gray-500 font-normal">Result: A large, sparse linear system<br><span class="latex">Ax = b</span></p></div>
+                    <div class="flowchart-arrow"></div>
+                    <div class="flowchart-step w-full max-w-md"><strong>4. Create QUBO</strong><p class="text-sm text-gray-500 font-normal">Minimize <span class="latex">||Ax - b||²</span> and binarize variables</p></div>
+                    <div class="flowchart-arrow"></div>
+                    <div class="flowchart-step w-full max-w-md"><strong>5. Linearize QUBO</strong><p class="text-sm text-gray-500 font-normal">Convert quadratic problem to a linear ILP for the solver</p></div>
+                    <div class="flowchart-arrow"></div>
+                    <div class="flowchart-step w-full max-w-md"><strong>6. Map to Memcomputer</strong><p class="text-sm text-gray-500 font-normal">Embed the ILP into a Self-Organizing Algebraic Circuit (SOAC)</p></div>
+                    <div class="flowchart-arrow"></div>
+                    <div class="flowchart-step w-full max-w-md"><strong>7. Evolve & Solve</strong><p class="text-sm text-gray-500 font-normal">The physical circuit dynamics find the equilibrium (solution)</p></div>
+                    <div class="flowchart-arrow"></div>
+                    <div class="flowchart-step w-full max-w-md bg-[#00A1E4] text-white"><strong>8. Reconstruct Field</strong><p class="text-sm text-blue-100 font-normal">Convert binary solution back to continuous physical field values</p></div>
+                </div>
+            </section>
+            
+            <section id="tradeoff" class="bg-white rounded-lg shadow-md p-6 lg:p-8">
+                <h2 class="text-3xl font-bold text-[#005082] mb-4 text-center">Section 5: The Core Challenge - Precision vs. Size</h2>
+                <p class="text-center text-gray-700 max-w-3xl mx-auto mb-8">The most significant bottleneck in this process is converting continuous field values into binary bits. Higher precision (more bits per variable) yields a more accurate answer but causes the problem size for the solver to explode, quickly exceeding hardware capabilities. This trade-off is central to the viability of the entire approach.</p>
+                <div class="chart-container mx-auto">
+                    <canvas id="precisionTradeoffChart"></canvas>
+                </div>
+                <p class="text-center text-gray-600 mt-4 text-sm">This chart illustrates how increasing the number of bits (`P`) for precision leads to exponential growth in the QUBO problem size, while the accuracy gain diminishes, highlighting a point of diminishing returns.</p>
+            </section>
+
+            <section id="landscape" class="bg-white rounded-lg shadow-md p-6 lg:p-8">
+                <h2 class="text-3xl font-bold text-[#005082] mb-4 text-center">Section 6: The Modern Computational Landscape</h2>
+                <p class="text-center text-gray-700 max-w-3xl mx-auto mb-8">This memcomputing workflow is part of a broader evolution in scientific computing. It competes with and complements other modern techniques, most notably Physics-Informed Neural Networks (PINNs), which use machine learning to solve PDEs without a grid.</p>
+                 <div class="grid grid-cols-1 md:grid-cols-5 gap-8 items-center">
+                    <div class="md:col-span-3">
+                         <div class="chart-container mx-auto h-64 md:h-80">
+                            <canvas id="landscapeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 text-gray-700">
+                        <h3 class="font-bold text-lg text-[#005082] mb-2">Two Paradigms</h3>
+                        <p class="mb-4">This chart gives a conceptual view of research interest in two leading-edge approaches to solving PDEs.</p>
+                        <ul class="space-y-2">
+                           <li><span class="font-bold text-[#0077C0]">Discretization-Based Solvers:</span> Includes the Memcomputing/QUBO workflow. They solve a finite system of equations. They are structured and leverage decades of numerical analysis.</li>
+                           <li><span class="font-bold text-[#00A1E4]">Mesh-Free Solvers (PINNs):</span> Use neural networks to learn a continuous solution function. They are flexible and data-driven but can be difficult to train.</li>
+                        </ul>
+                    </div>
+                 </div>
+            </section>
+
+        </main>
+
+        <footer class="text-center mt-16 pt-8 border-t border-gray-300">
+            <p class="text-gray-500">Infographic generated based on research into mapping Maxwell's PDEs to memcomputing architectures.</p>
+        </footer>
+
+    </div>
+
+    <script>
+        const tooltipTitleCallback = {
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            let label = item.chart.data.labels[item.dataIndex];
+                            if (Array.isArray(label)) {
+                                return label.join(' ');
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        };
+        
+        const wrapLabel = (label) => {
+            const maxLength = 16;
+            if (label.length <= maxLength) return label;
+            const words = label.split(' ');
+            const lines = [];
+            let currentLine = '';
+            for (const word of words) {
+                if ((currentLine + ' ' + word).trim().length > maxLength) {
+                    lines.push(currentLine.trim());
+                    currentLine = word;
+                } else {
+                    currentLine = (currentLine + ' ' + word).trim();
+                }
+            }
+            if (currentLine) {
+                lines.push(currentLine.trim());
+            }
+            return lines;
+        };
+        
+        const brilliantBlues = {
+            primary: '#00A1E4',
+            secondary: '#0077C0',
+            dark: '#005082',
+            light: '#F2F2F2',
+            text: '#231F20'
+        };
+
+        const ctxDiscretization = document.getElementById('discretizationChart').getContext('2d');
+        new Chart(ctxDiscretization, {
+            type: 'bar',
+            data: {
+                labels: ['Geometric Flexibility', 'Implementation Complexity', 'Computational Efficiency'],
+                datasets: [
+                    {
+                        label: 'FDM (FDTD)',
+                        data: [4, 8, 9],
+                        backgroundColor: brilliantBlues.primary,
+                        borderColor: brilliantBlues.secondary,
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'FEM',
+                        data: [9, 3, 4],
+                        backgroundColor: 'rgba(0, 122, 192, 0.6)',
+                        borderColor: brilliantBlues.secondary,
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'FVM',
+                        data: [7, 5, 6],
+                        backgroundColor: 'rgba(0, 80, 130, 0.6)',
+                        borderColor: brilliantBlues.dark,
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                ...tooltipTitleCallback,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 10,
+                        title: { display: true, text: 'Relative Score (1-10)' }
+                    }
+                },
+                plugins: {
+                    ...tooltipTitleCallback.plugins,
+                    title: { display: true, text: 'Comparison of Discretization Methods' }
+                }
+            }
+        });
+
+        const ctxQubo = document.getElementById('quboPathwayChart').getContext('2d');
+        new Chart(ctxQubo, {
+            type: 'radar',
+            data: {
+                labels: ['Conceptual Simplicity', ['Hardware', 'Scalability'], ['Precision', 'Handling'], 'Directness (One-shot)', 'Iterative Requirement'],
+                datasets: [{
+                    label: 'Least-Squares',
+                    data: [9, 2, 3, 10, 1],
+                    fill: true,
+                    backgroundColor: 'rgba(0, 161, 228, 0.2)',
+                    borderColor: brilliantBlues.primary,
+                    pointBackgroundColor: brilliantBlues.primary
+                }, {
+                    label: 'Generalized Eigenvalue',
+                    data: [4, 9, 9, 2, 10],
+                    fill: true,
+                    backgroundColor: 'rgba(0, 80, 130, 0.2)',
+                    borderColor: brilliantBlues.dark,
+                    pointBackgroundColor: brilliantBlues.dark
+                }]
+            },
+            options: {
+                ...tooltipTitleCallback,
+                maintainAspectRatio: false,
+                 scales: {
+                    r: {
+                        angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                        pointLabels: { font: { size: 11 } },
+                        suggestedMin: 0,
+                        suggestedMax: 10
+                    }
+                },
+                plugins: {
+                    ...tooltipTitleCallback.plugins,
+                    title: { display: true, text: 'QUBO Conversion Pathways Comparison' }
+                }
+            }
+        });
+        
+        const ctxTradeoff = document.getElementById('precisionTradeoffChart').getContext('2d');
+        new Chart(ctxTradeoff, {
+            type: 'line',
+            data: {
+                labels: ['4 bits', '8 bits', '12 bits', '16 bits', '20 bits', '24 bits'],
+                datasets: [
+                    {
+                        label: 'QUBO Problem Size',
+                        data: [1, 4, 9, 16, 25, 36],
+                        borderColor: brilliantBlues.primary,
+                        backgroundColor: 'rgba(0, 161, 228, 0.1)',
+                        fill: true,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Solution Accuracy',
+                        data: [75, 90, 96, 98, 99, 99.5],
+                        borderColor: brilliantBlues.dark,
+                        backgroundColor: 'rgba(0, 80, 130, 0.1)',
+                        fill: true,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                ...tooltipTitleCallback,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { title: { display: true, text: 'Precision (P)' } },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Problem Size (Relative Growth)' },
+                        grid: { drawOnChartArea: false }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Accuracy (%)' },
+                        suggestedMin: 70,
+                        suggestedMax: 100
+                    }
+                },
+                plugins: {
+                    ...tooltipTitleCallback.plugins,
+                    title: { display: true, text: 'The Precision vs. Problem Size Trade-off' }
+                }
+            }
+        });
+        
+        const ctxLandscape = document.getElementById('landscapeChart').getContext('2d');
+        const landscapeLabels = [
+            wrapLabel('Discretization-Based (Memcomputing, QUBO)'),
+            wrapLabel('Mesh-Free Solvers (PINNs, etc.)')
+        ];
+        new Chart(ctxLandscape, {
+            type: 'doughnut',
+            data: {
+                labels: landscapeLabels,
+                datasets: [{
+                    label: 'Conceptual Research Interest',
+                    data: [60, 40],
+                    backgroundColor: [brilliantBlues.secondary, brilliantBlues.primary],
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                ...tooltipTitleCallback,
+                maintainAspectRatio: false,
+                plugins: {
+                    ...tooltipTitleCallback.plugins,
+                    title: { display: true, text: 'Modern PDE Solver Paradigms' },
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    </script>
+
+</body>
+</html>
